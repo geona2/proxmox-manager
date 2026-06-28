@@ -1,0 +1,30 @@
+[
+  {
+    "id": "ubuntu-22.04-iso",
+    "name": "ubuntu-22.04.4-live-server-amd64.iso",
+    "type": "iso",
+    "url": "https://releases.ubuntu.com/22.04/ubuntu-22.04.4-live-server-amd64.iso",
+    "size_gb": 2.1
+  },
+  {
+    "id": "debian-12-iso",
+    "name": "debian-12.5.0-amd64-netinst.iso",
+    "type": "iso",
+    "url": "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.5.0-amd64-netinst.iso",
+    "size_gb": 0.7
+  },
+  {
+    "id": "alpine-3.19-lxc",
+    "name": "alpine-3.19-default_20240207_amd64.tar.xz",
+    "type": "vztmpl",
+    "url": "http://download.proxmox.com/images/aplinfo/alpine-3.19-default_20240207_amd64.tar.xz",
+    "size_gb": 0.05
+  },
+  {
+    "id": "ubuntu-22.04-lxc",
+    "name": "ubuntu-22.04-default_20221130_amd64.tar.zst",
+    "type": "vztmpl",
+    "url": "http://download.proxmox.com/images/aplinfo/ubuntu-22.04-default_20221130_amd64.tar.zst",
+    "size_gb": 0.12
+  }
+]

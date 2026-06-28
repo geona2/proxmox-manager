@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: proxmox-manager-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_postgres_password_here
+      POSTGRES_DB: geona
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: ballantine04/geona:backend-prod
+    build:
+      context: ./backend
+      target: production
+    container_name: proxmox-manager-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./uploaded_images:/app/uploaded_images
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql+asyncpg://postgres:your_postgres_password_here@postgres:5432/geona
+      - UPLOAD_DIR=/app/uploaded_images
+
+  frontend:
+    image: ballantine04/geona:frontend-prod
+    build:
+      context: ./frontend
+    container_name: proxmox-manager-frontend
+    restart: unless-stopped
+    ports:
+      - "8116:8116"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

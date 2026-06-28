@@ -1,0 +1,22 @@
+# Python environment
+backend/.venv/
+backend/__pycache__/
+backend/app/__pycache__/
+backend/app/routers/__pycache__/
+
+# Node.js dependencies & builds
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Persistent data and secrets (CRITICAL FOR SECURITY)
+backend/data/servers.json
+backend/data/users.json
+backend/data/mock_state.json
+uploaded_images/
+.env
+
+# System files
+.DS_Store
+Thumbs.db
+*.log
