@@ -807,7 +807,7 @@ export default function Home() {
         imagesList={imagesList}
         isCreating={isCreatingGuest}
         onServerChange={handleModalServerChange}
-        onNodeChange={(node) => handleModalNodeChange(node, distributePayload.serverId)}
+        onNodeChange={(node, sid) => handleModalNodeChange(node, sid)}
       />
 
       {/* 4. Create OS Template Modal */}
@@ -821,7 +821,7 @@ export default function Home() {
         imagesList={imagesList}
         isCreating={isCreatingTemplate}
         onServerChange={handleModalServerChange}
-        onNodeChange={(node) => handleModalNodeChange(node, distributePayload.serverId)}
+        onNodeChange={(node, sid) => handleModalNodeChange(node, sid)}
       />
 
       {/* 5. Distribute Image Modal */}

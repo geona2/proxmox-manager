@@ -11,7 +11,7 @@ interface CreateGuestModalProps {
   imagesList: ImageModel[];
   isCreating: boolean;
   onServerChange: (serverId: string) => void;
-  onNodeChange: (node: string) => void;
+  onNodeChange: (node: string, serverId: string) => void;
 }
 
 export default function CreateGuestModal({
@@ -59,7 +59,7 @@ export default function CreateGuestModal({
     if (nodes.length > 0) {
       const defaultNode = nodes[0].name || nodes[0].node || "";
       setNode(defaultNode);
-      onNodeChange(defaultNode);
+      onNodeChange(defaultNode, serverId);
     }
   }, [nodes]);
 
@@ -175,7 +175,7 @@ export default function CreateGuestModal({
                 value={node}
                 onChange={(e) => {
                   setNode(e.target.value);
-                  onNodeChange(e.target.value);
+                  onNodeChange(e.target.value, serverId);
                 }}
                 className="w-full bg-slate-900 border border-indigo-500/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
                 disabled={isCreating}
@@ -303,7 +303,9 @@ export default function CreateGuestModal({
               >
                 <option value="" disabled>스토리지를 선택하세요</option>
                 {storages.map((st: any) => (
-                  <option key={st.name} value={st.name}>{st.name} ({st.content})</option>
+                  <option key={st.name} value={st.name}>
+                    {st.name} (남은 용량: {(st.total_gb - st.used_gb).toFixed(1)} GB / 전체: {st.total_gb} GB)
+                  </option>
                 ))}
               </select>
             </div>

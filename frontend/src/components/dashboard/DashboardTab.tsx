@@ -48,6 +48,39 @@ export default function DashboardTab({
   // Sidebar search filter
   const [sidebarSearch, setSidebarSearch] = React.useState("");
 
+  // Sidebar drag resizer states & effect
+  const [sidebarWidth, setSidebarWidth] = React.useState<number>(288);
+  const [isResizing, setIsResizing] = React.useState(false);
+
+  const startResizing = React.useCallback((mouseDownEvent: React.MouseEvent) => {
+    mouseDownEvent.preventDefault();
+    setIsResizing(true);
+  }, []);
+
+  React.useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      // 가변 너비 반응형 처리: 최소 240px, 최대 브라우저 가로 폭의 45%로 제한
+      const maxAllowedWidth = Math.max(300, window.innerWidth * 0.45);
+      const newWidth = Math.max(240, Math.min(maxAllowedWidth, e.clientX));
+      setSidebarWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing]);
+
   // Ceph Storage states
   const [cephStatus, setCephStatus] = React.useState<any>(null);
   const [cephPools, setCephPools] = React.useState<any[]>([]);
@@ -542,10 +575,13 @@ export default function DashboardTab({
         </div>
       ) : (
         // CLUSTER CONTROL TAB (Proxmox-Style Split-Pane Tree Sidebar Layout)
-        <div className="flex flex-col md:flex-row gap-6 items-stretch min-h-[680px]">
+        <div className="flex flex-col md:flex-row gap-2 items-stretch min-h-[680px]">
           
           {/* LEFT SIDEBAR: Collapsible Tree Selector */}
-          <div className="w-full md:w-72 flex-shrink-0 bg-[#0d0f17]/40 border border-indigo-500/10 rounded-2xl p-4 flex flex-col gap-4 glass-card">
+          <div 
+            style={{ width: typeof window !== "undefined" && window.innerWidth >= 768 ? `${sidebarWidth}px` : "100%" }}
+            className="w-full md:w-auto flex-shrink-0 bg-[#0d0f17]/40 border border-indigo-500/10 rounded-2xl p-4 flex flex-col gap-4 glass-card"
+          >
             <div className="relative">
               <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -699,6 +735,15 @@ export default function DashboardTab({
               </div>
             </div>
           </div>
+
+          {/* SIDEBAR RESIZER SPLITTER (Interactive drag handle) */}
+          <div
+            onMouseDown={startResizing}
+            className={`hidden md:block w-1.5 hover:w-2 hover:bg-indigo-500/40 active:bg-indigo-500/60 rounded-full cursor-col-resize select-none self-stretch transition-all duration-150 ${
+              isResizing ? "bg-indigo-500/50 w-2 shadow-[0_0_10px_rgba(99,102,241,0.5)]" : "bg-indigo-500/5"
+            }`}
+            title="Drag to resize sidebar"
+          />
 
           {/* RIGHT PANEL: Contextual Detail Viewer */}
           <div className="flex-1 bg-[#0d0f17]/20 border border-indigo-500/10 rounded-2xl p-6 flex flex-col gap-6 overflow-y-auto max-h-[750px] relative glass-card">

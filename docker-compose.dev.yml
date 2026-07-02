@@ -21,9 +21,6 @@ services:
 
   backend:
     image: ballantine04/geona:backend-dev
-    build:
-      context: ./backend
-      target: development
     container_name: proxmox-manager-backend-dev
     restart: unless-stopped
     ports:
@@ -41,8 +38,6 @@ services:
 
   frontend:
     image: ballantine04/geona:frontend-dev
-    build:
-      context: ./frontend
     container_name: proxmox-manager-frontend-dev
     restart: unless-stopped
     ports:
