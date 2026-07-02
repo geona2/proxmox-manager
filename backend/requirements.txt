@@ -10,4 +10,4 @@ sqlalchemy[asyncio]>=2.0.28
 asyncpg>=0.29.0
 greenlet>=3.0.3
 psycopg2-binary>=2.9.9
-
+websockets>=12.0

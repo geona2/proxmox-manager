@@ -189,3 +189,15 @@ class ProxmoxClient:
             
         result = await self._request("POST", "storage", data=data)
         return result is not None
+
+    async def vncproxy(self, node: str, guest_type: str, vmid: int) -> Optional[Dict[str, Any]]:
+        path = f"nodes/{node}/{guest_type}/{vmid}/vncproxy"
+        data = {
+            "websocket": 1,
+            "generate-password": 1
+        }
+        result = await self._request("POST", path, data=data)
+        if result and "data" in result:
+            return result["data"]
+        return None
+

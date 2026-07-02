@@ -1,6 +1,7 @@
 import React from "react";
 import { ProxmoxServerData, GuestInfo } from "../../types";
 import CreateCephStorageModal from "../modals/CreateCephStorageModal";
+import VncConsole from "./VncConsole";
 
 interface DashboardTabProps {
   dashboardData: any;
@@ -1205,7 +1206,6 @@ export default function DashboardTab({
               const guest = server?.guests.find((g: any) => g.vmid === selectedItem.vmid);
               if (!guest) return <p className="text-gray-400 text-xs">Guest details not found.</p>;
               const isRunning = guest.status === "running";
-              const consoleUrl = `https://${server.host}:${server.port || 8006}/?console=${guest.type}&novnc=1&vmid=${guest.vmid}&node=${guest.node}&activeTab=console`;
 
               return (
                 <div className="flex flex-col gap-6 animate-in fade-in duration-200">
@@ -1366,30 +1366,16 @@ export default function DashboardTab({
                           </svg>
                           Live Console Connection
                         </h4>
-                        {isRunning && (
-                          <a
-                            href={consoleUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition flex items-center gap-1"
-                          >
-                            새창으로 보기
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                          </a>
-                        )}
                       </div>
 
                       {isRunning ? (
-                        <div className="w-full h-[520px] bg-slate-950 border border-indigo-500/10 rounded-2xl overflow-hidden relative shadow-inner">
-                          <iframe
-                            src={consoleUrl}
-                            className="w-full h-full border-none"
-                            title={`Console - VM ${guest.vmid}`}
-                            allowFullScreen
-                          />
-                        </div>
+                        <VncConsole
+                          serverId={server.id}
+                          vmid={guest.vmid}
+                          node={guest.node}
+                          type={guest.type}
+                          backendUrl={BACKEND_URL}
+                        />
                       ) : (
                         <div className="flex flex-col items-center justify-center py-16 bg-slate-950/30 border border-dashed border-indigo-500/10 rounded-2xl text-gray-500 text-xs gap-3">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1413,14 +1399,14 @@ export default function DashboardTab({
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          Console Connection & Firewall Guidance
+                          Console Tunneling Guidance
                         </div>
                         <p>
-                          Proxmox VE uses a **single port (8006)** for both API queries and console traffic. If the console fails to load:
+                          The console traffic is securely proxied through the PDM backend. If connection problems persist:
                         </p>
                         <ul className="list-disc pl-4 flex flex-col gap-0.5 text-gray-400">
-                          <li>Ensure firewall rules allow direct connection to the Proxmox host <strong>{server.host}:{server.port || 8006}</strong>.</li>
-                          <li>You must accept the self-signed SSL certificate in your browser (click <a href={`https://${server.host}:${server.port || 8006}`} target="_blank" rel="noopener noreferrer" className="underline text-indigo-400 hover:text-indigo-300">here</a> to visit the Proxmox dashboard directly and trust the cert).</li>
+                          <li>Check if the PDM backend has a network path to the Proxmox host <strong>{server.host}:{server.port || 8006}</strong>.</li>
+                          <li>Ensure the VM/Container is running and has the QEMU Guest Agent or display server active.</li>
                         </ul>
                       </div>
                     </div>
