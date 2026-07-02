@@ -48,67 +48,51 @@ export default function DashboardTab({
   // Sidebar search filter
   const [sidebarSearch, setSidebarSearch] = React.useState("");
 
-  // Sidebar drag resizer — ref-based direct DOM manipulation for native-level performance
+  // Sidebar drag resizer — position-based direct cursor mapping (no delta calculation)
   const [sidebarWidth, setSidebarWidth] = React.useState<number>(288);
   const sidebarRef = React.useRef<HTMLDivElement>(null);
   const rightPanelRef = React.useRef<HTMLDivElement>(null);
-  const isResizingRef = React.useRef(false);
-  const startXRef = React.useRef(0);
-  const startWidthRef = React.useRef(0);
-  const rafRef = React.useRef<number>(0);
 
-  const startResizing = React.useCallback((mouseDownEvent: React.MouseEvent) => {
-    mouseDownEvent.preventDefault();
-    mouseDownEvent.stopPropagation();
-    isResizingRef.current = true;
-    startXRef.current = mouseDownEvent.clientX;
-    startWidthRef.current = sidebarRef.current?.getBoundingClientRect().width || sidebarWidth;
+  const startResizing = React.useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-    // 드래그 시작: 바디 전체 커서 고정 및 텍스트 선택 차단
+    // 사이드바 왼쪽 모서리 X좌표 — 드래그 시작 시 한 번만 측정 (고정값)
+    const sidebarLeft = sidebarRef.current!.getBoundingClientRect().left;
+
+    // 좌우 패널 CSS transition 즉시 비활성화 (glass-card의 transition: all 0.3s 무력화)
+    sidebarRef.current!.style.transition = "none";
+    rightPanelRef.current!.style.transition = "none";
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
 
-    // 좌우 패널 CSS transition 즉시 비활성화
-    if (sidebarRef.current) sidebarRef.current.style.transition = "none";
-    if (rightPanelRef.current) rightPanelRef.current.style.transition = "none";
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizingRef.current) return;
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = requestAnimationFrame(() => {
-        const deltaX = e.clientX - startXRef.current;
-        const maxW = Math.max(300, window.innerWidth * 0.45);
-        const newWidth = Math.max(240, Math.min(maxW, startWidthRef.current + deltaX));
-        // React를 우회하여 DOM을 직접 조작 — 리렌더링 0회
-        if (sidebarRef.current) {
-          sidebarRef.current.style.width = `${newWidth}px`;
-        }
-      });
+    const onMove = (ev: MouseEvent) => {
+      // 핵심: 사이드바 너비 = 마우스 X좌표 − 사이드바 왼쪽 모서리
+      const maxW = Math.max(300, window.innerWidth * 0.45);
+      const newWidth = Math.max(240, Math.min(maxW, ev.clientX - sidebarLeft));
+      sidebarRef.current!.style.width = `${newWidth}px`;
     };
 
-    const handleMouseUp = (e: MouseEvent) => {
-      isResizingRef.current = false;
-      cancelAnimationFrame(rafRef.current);
-
+    const onUp = () => {
       // 바디 스타일 원복
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
 
       // 좌우 패널 CSS transition 원복
-      if (sidebarRef.current) sidebarRef.current.style.transition = "";
-      if (rightPanelRef.current) rightPanelRef.current.style.transition = "";
+      sidebarRef.current!.style.transition = "";
+      rightPanelRef.current!.style.transition = "";
 
       // 최종 너비를 React state에 동기화 (1회만 리렌더링)
-      const finalWidth = sidebarRef.current?.getBoundingClientRect().width || sidebarWidth;
+      const finalWidth = sidebarRef.current!.getBoundingClientRect().width;
       setSidebarWidth(finalWidth);
 
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-  }, [sidebarWidth]);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }, []);
 
   // Ceph Storage states
   const [cephStatus, setCephStatus] = React.useState<any>(null);
@@ -610,7 +594,7 @@ export default function DashboardTab({
           <div 
             ref={sidebarRef}
             style={{ width: typeof window !== "undefined" && window.innerWidth >= 768 ? `${sidebarWidth}px` : "100%" }}
-            className="w-full md:w-auto flex-shrink-0 bg-[#0d0f17]/40 border border-indigo-500/10 rounded-2xl p-4 flex flex-col gap-4 glass-card"
+            className="w-full md:w-auto flex-shrink-0 overflow-hidden bg-[#0d0f17]/40 border border-indigo-500/10 rounded-2xl p-4 flex flex-col gap-4 glass-card"
           >
             <div className="relative">
               <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">

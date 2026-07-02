@@ -41,7 +41,6 @@ body {
 .glass-card:hover {
   border-color: rgba(99, 102, 241, 0.3);
   box-shadow: 0 12px 40px 0 rgba(99, 102, 241, 0.1);
-  transform: translateY(-2px);
 }
 
 /* Micro-animations */
