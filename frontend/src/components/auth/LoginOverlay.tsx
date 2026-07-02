@@ -105,9 +105,11 @@ export default function LoginOverlay({ backendUrl, onLoginSuccess }: LoginOverla
           </button>
         </form>
 
-        <div className="mt-8 text-center border-t border-indigo-500/5 pt-6 text-xs text-slate-400">
-          <p>초기 계정 정보: admin/admin123, operator/operator123, reader/reader123</p>
-        </div>
+        {process.env.NODE_ENV !== "production" && (
+          <div className="mt-8 text-center border-t border-indigo-500/5 pt-6 text-xs text-slate-400">
+            <p>초기 계정 정보: admin/admin123, operator/operator123, reader/reader123</p>
+          </div>
+        )}
       </div>
     </div>
   );
