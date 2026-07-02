@@ -48,51 +48,67 @@ export default function DashboardTab({
   // Sidebar search filter
   const [sidebarSearch, setSidebarSearch] = React.useState("");
 
-  // Sidebar drag resizer states, refs & effect
+  // Sidebar drag resizer — ref-based direct DOM manipulation for native-level performance
   const [sidebarWidth, setSidebarWidth] = React.useState<number>(288);
-  const [isResizing, setIsResizing] = React.useState(false);
-  const startX = React.useRef<number>(0);
-  const startWidth = React.useRef<number>(0);
+  const sidebarRef = React.useRef<HTMLDivElement>(null);
+  const rightPanelRef = React.useRef<HTMLDivElement>(null);
+  const isResizingRef = React.useRef(false);
+  const startXRef = React.useRef(0);
+  const startWidthRef = React.useRef(0);
+  const rafRef = React.useRef<number>(0);
 
   const startResizing = React.useCallback((mouseDownEvent: React.MouseEvent) => {
     mouseDownEvent.preventDefault();
-    startX.current = mouseDownEvent.clientX;
-    startWidth.current = sidebarWidth;
-    setIsResizing(true);
-  }, [sidebarWidth]);
+    mouseDownEvent.stopPropagation();
+    isResizingRef.current = true;
+    startXRef.current = mouseDownEvent.clientX;
+    startWidthRef.current = sidebarRef.current?.getBoundingClientRect().width || sidebarWidth;
 
-  React.useEffect(() => {
+    // 드래그 시작: 바디 전체 커서 고정 및 텍스트 선택 차단
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    // 좌우 패널 CSS transition 즉시 비활성화
+    if (sidebarRef.current) sidebarRef.current.style.transition = "none";
+    if (rightPanelRef.current) rightPanelRef.current.style.transition = "none";
+
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing) return;
-      const deltaX = e.clientX - startX.current;
-      const calculatedWidth = startWidth.current + deltaX;
-      
-      // 가변 너비 반응형 처리: 최소 240px, 최대 브라우저 가로 폭의 45%로 제한
-      const maxAllowedWidth = Math.max(300, window.innerWidth * 0.45);
-      const newWidth = Math.max(240, Math.min(maxAllowedWidth, calculatedWidth));
-      setSidebarWidth(newWidth);
+      if (!isResizingRef.current) return;
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        const deltaX = e.clientX - startXRef.current;
+        const maxW = Math.max(300, window.innerWidth * 0.45);
+        const newWidth = Math.max(240, Math.min(maxW, startWidthRef.current + deltaX));
+        // React를 우회하여 DOM을 직접 조작 — 리렌더링 0회
+        if (sidebarRef.current) {
+          sidebarRef.current.style.width = `${newWidth}px`;
+        }
+      });
     };
 
-    const handleMouseUp = () => {
-      setIsResizing(false);
-    };
+    const handleMouseUp = (e: MouseEvent) => {
+      isResizingRef.current = false;
+      cancelAnimationFrame(rafRef.current);
 
-    if (isResizing) {
-      // 드래그 중 네이티브 커서 및 텍스트 선택 잠금 강제 적용
-      document.body.style.cursor = "col-resize";
-      document.body.style.userSelect = "none";
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
-    }
-
-    return () => {
-      // 컴포넌트 언마운트 혹은 드래그 종료 시 원상태 복구
+      // 바디 스타일 원복
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
+
+      // 좌우 패널 CSS transition 원복
+      if (sidebarRef.current) sidebarRef.current.style.transition = "";
+      if (rightPanelRef.current) rightPanelRef.current.style.transition = "";
+
+      // 최종 너비를 React state에 동기화 (1회만 리렌더링)
+      const finalWidth = sidebarRef.current?.getBoundingClientRect().width || sidebarWidth;
+      setSidebarWidth(finalWidth);
+
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isResizing]);
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  }, [sidebarWidth]);
 
   // Ceph Storage states
   const [cephStatus, setCephStatus] = React.useState<any>(null);
@@ -592,11 +608,8 @@ export default function DashboardTab({
           
           {/* LEFT SIDEBAR: Collapsible Tree Selector */}
           <div 
-            style={{ 
-              width: typeof window !== "undefined" && window.innerWidth >= 768 ? `${sidebarWidth}px` : "100%",
-              transition: isResizing ? "none" : undefined,
-              userSelect: isResizing ? "none" : undefined
-            }}
+            ref={sidebarRef}
+            style={{ width: typeof window !== "undefined" && window.innerWidth >= 768 ? `${sidebarWidth}px` : "100%" }}
             className="w-full md:w-auto flex-shrink-0 bg-[#0d0f17]/40 border border-indigo-500/10 rounded-2xl p-4 flex flex-col gap-4 glass-card"
           >
             <div className="relative">
@@ -753,17 +766,21 @@ export default function DashboardTab({
             </div>
           </div>
 
-          {/* SIDEBAR RESIZER SPLITTER (Interactive drag handle) */}
+          {/* SIDEBAR RESIZER SPLITTER (Wide hit area with thin visual line) */}
           <div
             onMouseDown={startResizing}
-            className={`hidden md:block w-1.5 hover:w-2 hover:bg-indigo-500/40 active:bg-indigo-500/60 rounded-full cursor-col-resize select-none self-stretch transition-all duration-150 ${
-              isResizing ? "bg-indigo-500/50 w-2 shadow-[0_0_10px_rgba(99,102,241,0.5)]" : "bg-indigo-500/5"
-            }`}
+            className="hidden md:flex items-center justify-center cursor-col-resize select-none self-stretch group"
+            style={{ width: "12px", padding: "0 4px" }}
             title="Drag to resize sidebar"
-          />
+          >
+            <div className="w-[3px] h-full rounded-full bg-indigo-500/10 group-hover:bg-indigo-500/40" />
+          </div>
 
           {/* RIGHT PANEL: Contextual Detail Viewer */}
-          <div className="flex-1 bg-[#0d0f17]/20 border border-indigo-500/10 rounded-2xl p-6 flex flex-col gap-6 overflow-y-auto max-h-[750px] relative glass-card">
+          <div 
+            ref={rightPanelRef}
+            className="flex-1 bg-[#0d0f17]/20 border border-indigo-500/10 rounded-2xl p-6 flex flex-col gap-6 overflow-y-auto max-h-[750px] relative glass-card"
+          >
             
             {/* 1. DATACENTER CONTEXT DETAILS */}
             {selectedItem.type === "datacenter" && (
