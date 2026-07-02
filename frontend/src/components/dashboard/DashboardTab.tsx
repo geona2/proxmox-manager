@@ -78,11 +78,17 @@ export default function DashboardTab({
     };
 
     if (isResizing) {
+      // 드래그 중 네이티브 커서 및 텍스트 선택 잠금 강제 적용
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
     }
 
     return () => {
+      // 컴포넌트 언마운트 혹은 드래그 종료 시 원상태 복구
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
@@ -586,7 +592,11 @@ export default function DashboardTab({
           
           {/* LEFT SIDEBAR: Collapsible Tree Selector */}
           <div 
-            style={{ width: typeof window !== "undefined" && window.innerWidth >= 768 ? `${sidebarWidth}px` : "100%" }}
+            style={{ 
+              width: typeof window !== "undefined" && window.innerWidth >= 768 ? `${sidebarWidth}px` : "100%",
+              transition: isResizing ? "none" : undefined,
+              userSelect: isResizing ? "none" : undefined
+            }}
             className="w-full md:w-auto flex-shrink-0 bg-[#0d0f17]/40 border border-indigo-500/10 rounded-2xl p-4 flex flex-col gap-4 glass-card"
           >
             <div className="relative">
