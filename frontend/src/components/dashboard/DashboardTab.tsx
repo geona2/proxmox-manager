@@ -48,21 +48,28 @@ export default function DashboardTab({
   // Sidebar search filter
   const [sidebarSearch, setSidebarSearch] = React.useState("");
 
-  // Sidebar drag resizer states & effect
+  // Sidebar drag resizer states, refs & effect
   const [sidebarWidth, setSidebarWidth] = React.useState<number>(288);
   const [isResizing, setIsResizing] = React.useState(false);
+  const startX = React.useRef<number>(0);
+  const startWidth = React.useRef<number>(0);
 
   const startResizing = React.useCallback((mouseDownEvent: React.MouseEvent) => {
     mouseDownEvent.preventDefault();
+    startX.current = mouseDownEvent.clientX;
+    startWidth.current = sidebarWidth;
     setIsResizing(true);
-  }, []);
+  }, [sidebarWidth]);
 
   React.useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
+      const deltaX = e.clientX - startX.current;
+      const calculatedWidth = startWidth.current + deltaX;
+      
       // 가변 너비 반응형 처리: 최소 240px, 최대 브라우저 가로 폭의 45%로 제한
       const maxAllowedWidth = Math.max(300, window.innerWidth * 0.45);
-      const newWidth = Math.max(240, Math.min(maxAllowedWidth, e.clientX));
+      const newWidth = Math.max(240, Math.min(maxAllowedWidth, calculatedWidth));
       setSidebarWidth(newWidth);
     };
 
@@ -648,7 +655,7 @@ export default function DashboardTab({
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.2 3.6 4 8 4s8-1.8 8-4V7M4 7c0 2.2 3.6 4 8 4s8-1.8 8-4M4 7c0-2.2 3.6-4 8-4s8 1.8 8 4m0 5c0 2.2-3.6 4-8 4s-8-1.8-8-4" />
                           </svg>
-                          <span className="truncate max-w-[130px]">{server.name}</span>
+                          <span className="truncate flex-1">{server.name}</span>
                         </div>
                         <button 
                           onClick={() => setTreeExpanded(prev => ({ ...prev, [serverKey]: !prev[serverKey] }))}
@@ -681,7 +688,7 @@ export default function DashboardTab({
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
                                     </svg>
-                                    <span className="truncate max-w-[120px]">{node.name}</span>
+                                    <span className="truncate flex-1">{node.name}</span>
                                   </div>
                                   <button 
                                     onClick={() => setTreeExpanded(prev => ({ ...prev, [nodeKey]: !prev[nodeKey] }))}
@@ -718,7 +725,7 @@ export default function DashboardTab({
                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                             </svg>
                                           )}
-                                          <span className="truncate max-w-[120px]">{guest.vmid} ({guest.name})</span>
+                                           <span className="truncate flex-1">{guest.vmid} ({guest.name})</span>
                                         </div>
                                       );
                                     })}
